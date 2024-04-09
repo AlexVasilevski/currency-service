@@ -1,0 +1,28 @@
+version: "2"
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  db-postgres-currency:
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=currency_db
+    volumes:
+      - ./db/currency_db:/docker-entrypoint-initdb.d
+
+  liquibase:
+    image: liquibase/liquibase:latest
+    volumes:
+      - ./db/currency_db:/docker-entrypoint-initdb.d
+    depends_on:
+      - db-postgres-currency
+    command: ["--changeLogFile=/currency_db/changelog.xml",
+              "--url=jdbc:postgresql://postgres:5432/currency_db",
+              "--username=postgres", "--password=postgres", "update"]
